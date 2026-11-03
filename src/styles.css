@@ -8,3 +8,120 @@
 .paint-frame svg {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
+
+/* ---------------- 《一脚封神》 ---------------- */
+
+.onekick {
+  font-family: ui-sans-serif, system-ui, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC",
+    "Microsoft YaHei", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.onekick-display {
+  font-family: ui-sans-serif, system-ui, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC",
+    "Microsoft YaHei", sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+/* 球场夜战底纹 */
+.stadium-bg {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(86, 200, 140, 0.16), transparent 60%),
+    radial-gradient(80% 60% at 50% 110%, rgba(255, 196, 92, 0.1), transparent 65%),
+    #07110e;
+}
+
+.glass {
+  background: linear-gradient(160deg, rgba(18, 32, 27, 0.92), rgba(9, 18, 15, 0.94));
+  border: 1px solid rgba(140, 220, 180, 0.16);
+  backdrop-filter: blur(10px);
+}
+
+@keyframes ok-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ok-flash {
+  0% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ok-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-7px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes ok-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ok-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 196, 92, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 22px rgba(255, 196, 92, 0);
+  }
+}
+
+.ok-pop {
+  animation: ok-pop 0.34s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+.ok-flash {
+  animation: ok-flash 0.7s ease-out both;
+}
+.ok-shake {
+  animation: ok-shake 0.5s ease-in-out both;
+}
+.ok-rise {
+  animation: ok-rise 0.35s ease-out both;
+}
+.ok-ring {
+  animation: ok-pulse-ring 1.4s ease-out infinite;
+}
+
+.ok-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.ok-scroll::-webkit-scrollbar-thumb {
+  background: rgba(140, 220, 180, 0.25);
+  border-radius: 99px;
+}

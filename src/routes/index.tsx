@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -10,7 +10,13 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   return (
-    <main className="grid min-h-screen w-full place-items-center bg-[#0e0e0c] p-4 sm:p-8">
+    <main className="relative grid min-h-screen w-full place-items-center bg-[#0e0e0c] p-4 sm:p-8">
+      <Link
+        to="/game"
+        className="onekick absolute left-1/2 top-6 z-10 -translate-x-1/2 rounded-full border border-amber-300/50 bg-amber-300/10 px-5 py-2 text-xs font-bold tracking-[0.2em] text-amber-200 transition hover:bg-amber-300/20"
+      >
+        进入《一脚封神》 →
+      </Link>
       <div className="paint-frame w-full max-w-[1100px]">
         <svg viewBox="0 0 1000 700" className="block h-auto w-full" role="img" aria-label="抽象几何绘画">
           <defs>
