@@ -2,6 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pitch3D } from './Pitch3D'
 import { PitchBoard } from './PitchBoard'
 import { TraitChip } from './ui'
+import {
+  isMuted,
+  playConceded,
+  playGoal,
+  playMiss,
+  playTension,
+  playTrait,
+  playWhistle,
+  playWorldie,
+  setMuted,
+  unlockAudio,
+} from '../game/audio'
 import { getOpponent } from '../game/opponents'
 import { getTeam } from '../game/teams'
 import { getTrait } from '../game/traits'
@@ -21,7 +33,7 @@ export function MatchScreen({ game }: { game: GameApi }) {
   const run = game.run
   const match = run?.match ?? null
   const [resultKey, setResultKey] = useState(0)
-  const [flash, setFlash] = useState<'goal' | 'bad' | null>(null)
+  const [flash, setFlash] = useState<'goal' | 'bad' | 'stop' | null>(null)
   const lastResultRef = useRef<MomentResult | null>(null)
 
   const team = run ? getTeam(run.teamId) : null
@@ -44,35 +56,68 @@ export function MatchScreen({ game }: { game: GameApi }) {
     return match.moments[match.activeIndex] ?? null
   }, [match])
 
-  /* 选择之后 activeMoment 会变空，但球还在飞 —— 记住上一帧场景 */
-  const [lastScene, setLastScene] = useState<Scene | null>(null)
+  /* 结果动画期间画面必须定在刚才那一帧，所以只在空闲时更新展示场景 */
+  const busy = game.busy
+  const [shownScene, setShownScene] = useState<Scene | null>(null)
   useEffect(() => {
-    if (activeMoment) setLastScene(activeMoment.scene)
-  }, [activeMoment])
-  const displayScene = activeMoment?.scene ?? lastScene
+    if (!activeMoment || busy) return
+    setShownScene(activeMoment.scene)
+  }, [activeMoment, busy])
+  const displayScene = shownScene
+  /* 结果还在播的时候，下一个瞬间先不上屏 */
+  const currentMoment = busy ? null : activeMoment
 
   useEffect(() => {
     const r = game.lastResult
     if (!r || r === lastResultRef.current) return
     lastResultRef.current = r
     setResultKey((k) => k + 1)
-    setFlash(r.scoredBy === 'us' ? 'goal' : r.scoredBy === 'them' ? 'bad' : null)
-    const t = window.setTimeout(() => setFlash(null), 900)
+    setFlash(
+      r.scoredBy === 'us'
+        ? 'goal'
+        : r.scoredBy === 'them'
+          ? 'bad'
+          : r.outcome === 'defended' || r.outcome === 'card'
+            ? 'stop'
+            : 'bad',
+    )
+    if (r.scoredBy === 'us') {
+      if (r.worldie) playWorldie()
+      else playGoal()
+    } else if (r.scoredBy === 'them') {
+      playConceded()
+    } else if (r.outcome === 'post' || r.outcome === 'saved') {
+      playMiss()
+    } else if (r.outcome === 'card') {
+      playWhistle()
+    }
+    if (r.traitsFired.length > 0) window.setTimeout(playTrait, 260)
+    const t = window.setTimeout(() => setFlash(null), 1100)
     return () => window.clearTimeout(t)
   }, [game.lastResult])
+
+  /* 关键瞬间出现时的心跳 */
+  const activeKey = activeMoment ? `${activeMoment.minute}-${activeMoment.kind}` : null
+  const tensionRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!activeKey || tensionRef.current === activeKey) return
+    tensionRef.current = activeKey
+    playTension()
+  }, [activeKey])
+
+  const [muted, setMutedState] = useState(isMuted())
 
   if (!run || !match || !team || !opponent) return null
 
   const shootout = match.shootout
   const minute = shootout ? 120 : match.clock
-  const busy = game.busy
-  const attacking = activeMoment?.attacker === 'us'
-  const defensive = activeMoment?.attacker === 'them'
-  /* 结果播完之前先不放选项，留一个“快进”的节奉 */
-  const revealOptions = Boolean(activeMoment) && !busy
+  const attacking = currentMoment?.attacker === 'us'
+  const defensive = currentMoment?.attacker === 'them'
+  const revealOptions = Boolean(currentMoment)
 
   const handlePick = (optionId: string) => {
     if (busy) return
+    unlockAudio()
     game.choose(optionId)
   }
 
@@ -99,6 +144,19 @@ export function MatchScreen({ game }: { game: GameApi }) {
               {shootout ? 'PK' : `${minute}'`}
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              const next = !muted
+              setMuted(next)
+              setMutedState(next)
+              if (!next) unlockAudio()
+            }}
+            className="rounded-lg border border-emerald-200/20 bg-black/40 px-2 py-1 text-xs text-emerald-100/70 hover:border-emerald-200/50"
+            aria-label={muted ? '开启音效' : '关闭音效'}
+          >
+            {muted ? '🔇' : '🔊'}
+          </button>
         </div>
       </header>
 
@@ -117,15 +175,17 @@ export function MatchScreen({ game }: { game: GameApi }) {
             paused={false}
             className="absolute inset-0"
           />
-          {activeMoment && <PitchBoard scene={activeMoment.scene} us={team.colors} them={opponent.colors} />}
+          {currentMoment && (
+            <PitchBoard scene={currentMoment.scene} us={team.colors} them={opponent.colors} />
+          )}
 
           {/* 定格时压暗 + 心跳 */}
-          {activeMoment && (
+          {currentMoment && (
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(2,8,6,0.78)_100%)]" />
           )}
 
           {/* 关键瞬间标题 */}
-          {activeMoment && (
+          {currentMoment && (
             <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-col items-center gap-1 p-3 ok-pop">
               <span className="rounded-full bg-rose-500/90 px-3 py-1 text-[10px] font-black tracking-[0.24em] text-white shadow-lg">
                 关 键 瞬 间
@@ -133,7 +193,7 @@ export function MatchScreen({ game }: { game: GameApi }) {
               <span className="onekick-display text-base text-amber-200 drop-shadow-lg sm:text-lg">
                 {shootout
                   ? `点球大战 · ${shootout.turn === 'us' ? '我方主罚' : '我方扑救'}`
-                  : `${KIND_LABEL[activeMoment.kind]} · ${attacking ? '我方进攻' : '我方防守'}`}
+                  : `${KIND_LABEL[currentMoment.kind]} · ${attacking ? '我方进攻' : '我方防守'}`}
               </span>
             </div>
           )}
@@ -145,7 +205,9 @@ export function MatchScreen({ game }: { game: GameApi }) {
                 className={`ok-pop rounded-2xl px-6 py-3 text-center backdrop-blur-sm ${
                   flash === 'goal'
                     ? 'bg-amber-300/95 text-amber-950'
-                    : 'bg-rose-900/85 text-rose-50'
+                    : flash === 'stop'
+                      ? 'bg-emerald-300/95 text-emerald-950'
+                      : 'bg-rose-900/85 text-rose-50'
                 }`}
               >
                 <div className="onekick-display text-2xl sm:text-3xl">{game.lastResult.headline}</div>
@@ -168,8 +230,27 @@ export function MatchScreen({ game }: { game: GameApi }) {
             </div>
           )}
 
+          {/* 终场 */}
+          {match.finished && !currentMoment && (
+            <div className="absolute inset-0 grid place-items-center bg-black/55 backdrop-blur-[2px]">
+              <div className="ok-pop text-center">
+                <div className="text-[10px] uppercase tracking-[0.4em] text-emerald-200/60">
+                  Full Time
+                </div>
+                <div className="onekick-display mt-1 text-4xl text-emerald-50 tabular-nums">
+                  {match.score.us} : {match.score.them}
+                </div>
+                {match.shootout && (
+                  <div className="mt-1 text-xs text-amber-200">
+                    点球 {match.shootout.ourGoals} : {match.shootout.theirGoals}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* 等待中的呼吸提示 */}
-          {activeMoment && !busy && (
+          {currentMoment && (
             <div className="pointer-events-none absolute bottom-2 right-3 text-[10px] font-semibold tracking-widest text-amber-200/70">
               看准局势 →
             </div>
@@ -179,7 +260,7 @@ export function MatchScreen({ game }: { game: GameApi }) {
 
       {/* 选项区 */}
       <div className="relative z-20 px-3 pb-4 pt-3 sm:px-5">
-        {revealOptions && activeMoment ? (
+        {revealOptions && currentMoment ? (
           <div className="ok-rise">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-[10px] uppercase tracking-[0.2em] text-emerald-200/45">
@@ -190,13 +271,13 @@ export function MatchScreen({ game }: { game: GameApi }) {
                     : '你的这一脚'}
               </span>
               <span className="text-[10px] text-emerald-200/35">
-                {activeMoment.options.length === 1 ? '一击制胜' : `${activeMoment.options.length} 个选择`}
+                {currentMoment.options.length === 1 ? '一击制胜' : `${currentMoment.options.length} 个选择`}
               </span>
             </div>
             <div
-              className={`grid gap-2 ${activeMoment.options.length > 2 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2'}`}
+              className={`grid gap-2 ${currentMoment.options.length > 2 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2'}`}
             >
-              {activeMoment.options.map((opt) => (
+              {currentMoment.options.map((opt) => (
                 <button
                   key={opt.id}
                   type="button"

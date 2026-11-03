@@ -32,7 +32,7 @@ export function DraftScreen({ game }: { game: GameApi }) {
       <div className="mx-auto w-full max-w-2xl space-y-4">
         <div className="text-center">
           <div className="text-[10px] uppercase tracking-[0.32em] text-emerald-300/50">
-            第 {run.stageIndex} 场 · 胜利奖励
+            第 {run.stageIndex} 场胜利 · 下一场：{stageLabel(run.stageIndex)}
           </div>
           <h2 className="onekick-display mt-1 text-2xl text-amber-200">选择一个特性</h2>
           <p className="mt-1 text-[11px] text-emerald-100/50">

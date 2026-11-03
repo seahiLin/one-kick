@@ -25,18 +25,11 @@ export interface GameApi {
   goCollection: () => void
   beginRun: (teamId: string) => void
   choose: (optionId: string) => void
-  pickShootout: (optionId: string) => void
   chooseTrait: (traitId: string, replaceId?: string) => void
   reroll: () => void
-  requestReplace: () => void
-  cancelReplace: () => void
-  toPreview: () => void
   toMatch: () => void
-  finishAndSettle: () => void
   hardReset: () => void
-  clearResult: () => void
   rerollCost: number
-  traitSlots: number
 }
 
 export function useGame(): GameApi {
@@ -132,8 +125,6 @@ export function useGame(): GameApi {
     [run, save, lock],
   )
 
-  const pickShootout = choose
-
   const pickTraitAndAdvance = useCallback(
     (traitId: string, replaceId?: string) => {
       if (!run || !run.draft) return
@@ -155,24 +146,6 @@ export function useGame(): GameApi {
     if (next !== run) setRun(next)
   }, [run])
 
-  const requestReplace = useCallback(() => {
-    if (!run || !run.draft) return
-    setRun({ ...run, draft: { ...run.draft, replacing: true } })
-  }, [run])
-
-  const cancelReplace = useCallback(() => {
-    if (!run || !run.draft) return
-    setRun({ ...run, draft: { ...run.draft, replacing: false } })
-  }, [run])
-
-  const finishAndSettle = useCallback(() => {
-    if (!run) return
-    const result = settleRun(run, save)
-    setSave(result.save)
-    setSummary(result)
-    setScreen(run.status === 'champion' ? 'champion' : 'eliminated')
-  }, [run, save])
-
   const hardReset = useCallback(() => {
     const fresh = resetSave()
     setSave(fresh)
@@ -180,8 +153,6 @@ export function useGame(): GameApi {
     setSummary(null)
     setScreen('title')
   }, [])
-
-  const clearResult = useCallback(() => setLastResult(null), [])
 
   /* 存档变更后立即落盘（settleRun 内部已经写过一次，这里兜底） */
   useEffect(() => {
@@ -206,17 +177,10 @@ export function useGame(): GameApi {
     goCollection,
     beginRun,
     choose,
-    pickShootout,
     chooseTrait: pickTraitAndAdvance,
     reroll,
-    requestReplace,
-    cancelReplace,
-    toPreview,
     toMatch,
-    finishAndSettle,
     hardReset,
-    clearResult,
     rerollCost: REROLL_COST,
-    traitSlots: TRAIT_SLOTS,
   }
 }

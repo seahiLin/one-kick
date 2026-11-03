@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Btn, Panel, Stat, TraitCard } from './ui'
-import { ACHIEVEMENTS, DIFFICULTY_INFO, MAX_DIFFICULTY, collectionProgress } from '../game/meta'
+import { ACHIEVEMENTS, DIFFICULTY_INFO, MAX_DIFFICULTY, availableTraitIds, collectionProgress } from '../game/meta'
 import { TEAMS, teamUnlockText, teamUnlocked } from '../game/teams'
 import { TRAITS, getTrait } from '../game/traits'
 import { STAGES } from '../game/opponents'
@@ -206,7 +206,7 @@ export function TeamSelectScreen({ game }: { game: GameApi }) {
 
 export function CollectionScreen({ game }: { game: GameApi }) {
   const save = game.save
-  const unlocked = new Set(save.traits)
+  const unlocked = new Set(availableTraitIds(save))
   const teamsUnlocked = new Set(save.teams)
   return (
     <div className="min-h-screen stadium-bg px-4 py-6">
@@ -253,11 +253,11 @@ export function CollectionScreen({ game }: { game: GameApi }) {
 
         <Panel className="p-4">
           <SectionTitle>
-            特性池 {unlocked.size + baseCount()}/{TRAITS.length}
+            特性池 {unlocked.size}/{TRAITS.length}
           </SectionTitle>
           <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
             {TRAITS.map((t) => {
-              const has = t.base || unlocked.has(t.id)
+              const has = unlocked.has(t.id)
               return <TraitCard key={t.id} trait={t} compact dimmed={!has} />
             })}
           </div>
@@ -337,9 +337,6 @@ export function CollectionScreen({ game }: { game: GameApi }) {
   )
 }
 
-function baseCount(): number {
-  return TRAITS.filter((t) => t.base).length
-}
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="text-[10px] uppercase tracking-[0.2em] text-emerald-200/45">{children}</div>

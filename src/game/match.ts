@@ -234,7 +234,13 @@ function applyOutcome(
       line = `${minute}' 球高出横梁，机会溜走`
       state.commentary.push({ minute, text: '打偏了', tone: 'bad' })
     }
-  } else if (option.id === 'foul') {
+  } else if (outcome === 'conceded') {
+    scoredBy = 'them'
+    state.score.them += 1
+    headline = '丢球了'
+    line = `${minute}' 对手把握住了这次机会`
+    state.commentary.push({ minute, text: '对手进球了……', tone: 'bad' })
+  } else if (option.action === 'foul') {
     state.stats.cards += 1
     headline = '战术犯规'
     line = out.card
@@ -242,18 +248,11 @@ function applyOutcome(
       : `${minute}' 战术犯规成功打断反击，裁判没有出牌`
     outcome = 'card'
     state.commentary.push({ minute, text: '战术犯规，哨响了', tone: 'neutral' })
-  } else if (outcome === 'defended') {
+  } else {
     headline = '防下来了！'
     line = `${minute}' 你选择了正确的方式，反击被化解`
     state.stats.saves += 1
     state.commentary.push({ minute, text: '漂亮的防守！', tone: 'good' })
-  } else {
-    outcome = 'conceded'
-    scoredBy = 'them'
-    state.score.them += 1
-    headline = '丢球了'
-    line = `${minute}' 对手把握住了这次机会`
-    state.commentary.push({ minute, text: '对手进球了……', tone: 'bad' })
   }
 
   return {

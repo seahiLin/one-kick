@@ -152,7 +152,7 @@ export function settleRun(run: RunState, saveIn: MetaSave): RunSummary {
   save.stats.runs += 1
   save.stats.wins += run.wins
   save.stats.worldies += run.totals.worldies
-  save.stats.bestStage = Math.max(save.stats.bestStage, run.stageIndex + (run.status === 'champion' ? 1 : 0))
+  save.stats.bestStage = Math.max(save.stats.bestStage, run.history.length)
 
   const champion = run.status === 'champion'
   if (champion) save.stats.titles += 1

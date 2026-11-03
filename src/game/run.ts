@@ -276,14 +276,6 @@ export function pickTrait(run: RunState, traitId: string, replaceTraitId?: strin
   }
 }
 
-export function startNextMatch(run: RunState): RunState {
-  const next = { ...run, draft: null, match: null }
-  return {
-    ...next,
-    match: advanceToNextStop(next, buildMatch(next, run.stageIndex, opponentForStage(run.stageIndex))),
-  }
-}
-
 export function stageOpponentName(index: number): string {
   return opponentForStage(index).name
 }

@@ -16,6 +16,7 @@ export const TEAMS: Team[] = [
       { name: '铁塔·老石', role: 'ST', number: 9, height: 198 },
       { name: '塔顶·阿岩', role: 'DF', number: 5, height: 193 },
       { name: '弧线·齐布', role: 'W', number: 7, height: 178 },
+      { name: '门线·汉森', role: 'GK', number: 1, height: 196 },
     ],
   },
   {
@@ -30,6 +31,7 @@ export const TEAMS: Team[] = [
       { name: '弧光·里德', role: 'MF', number: 10, height: 176 },
       { name: '疾步·卡洛', role: 'W', number: 11, height: 174 },
       { name: '铁肺·丹', role: 'MF', number: 8, height: 182 },
+      { name: '飞身·奥托', role: 'GK', number: 1, height: 189 },
     ],
   },
   {
@@ -58,6 +60,7 @@ export const TEAMS: Team[] = [
       { name: '浪人·凯', role: 'ST', number: 7, height: 179 },
       { name: '风眼·墨', role: 'MF', number: 6, height: 177 },
       { name: '孤影·雷', role: 'DF', number: 3, height: 185 },
+      { name: '铁手·维加', role: 'GK', number: 1, height: 187 },
     ],
   },
 ]
