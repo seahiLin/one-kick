@@ -69,10 +69,10 @@ export class MatchRenderer {
   private ballShadow: THREE.Mesh
   private container: HTMLElement
   private mode: CameraMode = 'wide'
-  private cameraPos = new THREE.Vector3(0, 42, -62)
-  private cameraLook = new THREE.Vector3(0, 0, 8)
-  private targetPos = new THREE.Vector3(0, 42, -62)
-  private targetLook = new THREE.Vector3(0, 0, 8)
+  private cameraPos = new THREE.Vector3(0, 30, -44)
+  private cameraLook = new THREE.Vector3(0, 0, 4)
+  private targetPos = new THREE.Vector3(0, 30, -44)
+  private targetLook = new THREE.Vector3(0, 0, 4)
   private ballFrom = new THREE.Vector3(0, 0.3, 0)
   private ballTo = new THREE.Vector3(0, 0.3, 0)
   private ballFlight = -1
@@ -87,7 +87,7 @@ export class MatchRenderer {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this.renderer.shadowMap.enabled = true
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    this.renderer.shadowMap.type = THREE.PCFShadowMap
     this.renderer.setClearColor('#0a1512')
     container.appendChild(this.renderer.domElement)
     this.renderer.domElement.style.display = 'block'
@@ -95,7 +95,7 @@ export class MatchRenderer {
     this.renderer.domElement.style.height = '100%'
 
     this.scene = new THREE.Scene()
-    this.scene.fog = new THREE.Fog('#0a1512', 90, 190)
+    this.scene.fog = new THREE.Fog('#0d1d18', 150, 300)
 
     this.camera = new THREE.PerspectiveCamera(46, 1, 0.5, 400)
     this.camera.position.copy(this.cameraPos)
@@ -115,8 +115,8 @@ export class MatchRenderer {
     const scene = this.scene
 
     /* 夜战光 */
-    scene.add(new THREE.HemisphereLight('#bcd8ff', '#12261c', 1.15))
-    const key = new THREE.DirectionalLight('#fff3d6', 2.0)
+    scene.add(new THREE.HemisphereLight('#cfe6ff', '#16301f', 1.5))
+    const key = new THREE.DirectionalLight('#fff6e0', 2.6)
     key.position.set(-28, 62, -22)
     key.castShadow = true
     key.shadow.mapSize.set(1024, 1024)
@@ -189,33 +189,42 @@ export class MatchRenderer {
     this.buildGoal(PITCH_LENGTH / 2)
     this.buildGoal(-PITCH_LENGTH / 2)
 
-    /* 观众席：低多边形环 */
-    const standMat = new THREE.MeshStandardMaterial({ color: '#14201d', flatShading: true })
+    /* 观众席：围在球场外侧的矩形看台（必须完全在场地之外） */
+    const standMat = new THREE.MeshStandardMaterial({ color: '#26382f', flatShading: true })
+    const crowdMat = new THREE.MeshStandardMaterial({ color: '#3d5a4a', flatShading: true })
     for (let i = 0; i < 4; i += 1) {
-      const ring = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), standMat)
-      const w = 108 + i * 14
-      const d = 78 + i * 14
-      ring.scale.set(w, 6 + i * 5, 5)
-      ring.position.set(0, 3 + i * 2.5, -d / 2 - 4)
-      scene.add(ring)
-      const ring2 = ring.clone()
-      ring2.position.z = d / 2 + 4
-      scene.add(ring2)
-      const ring3 = ring.clone()
-      ring3.scale.set(5, 6 + i * 5, d)
-      ring3.position.set(-w / 2 - 4, 3 + i * 2.5, 0)
-      scene.add(ring3)
-      const ring4 = ring3.clone()
-      ring4.position.x = w / 2 + 4
-      scene.add(ring4)
+      const zOff = 58 + i * 13
+      const xOff = 42 + i * 13
+      const h = 7 + i * 5
+      const y = h / 2
+
+      /* 两端球门后的看台 */
+      for (const sign of [-1, 1]) {
+        const back = new THREE.Mesh(new THREE.BoxGeometry(96 + i * 22, h, 6), standMat)
+        back.position.set(0, y, sign * zOff)
+        scene.add(back)
+        const crowd = new THREE.Mesh(new THREE.BoxGeometry(90 + i * 22, 1.2, 3), crowdMat)
+        crowd.position.set(0, h + 0.4, sign * zOff)
+        scene.add(crowd)
+      }
+
+      /* 两侧看台 */
+      for (const sign of [-1, 1]) {
+        const side = new THREE.Mesh(new THREE.BoxGeometry(6, h, 96 + i * 22), standMat)
+        side.position.set(sign * xOff, y, 0)
+        scene.add(side)
+        const crowd = new THREE.Mesh(new THREE.BoxGeometry(3, 1.2, 90 + i * 22), crowdMat)
+        crowd.position.set(sign * xOff, h + 0.4, 0)
+        scene.add(crowd)
+      }
     }
 
-    /* 灯光塔 */
+    /* 灯光塔（在球场四角外侧） */
     for (const [x, z] of [
-      [-58, -50],
-      [58, -50],
-      [-58, 50],
-      [58, 50],
+      [-64, -62],
+      [64, -62],
+      [-64, 62],
+      [64, 62],
     ]) {
       const pole = new THREE.Mesh(
         new THREE.CylinderGeometry(0.5, 0.8, 34, 5),
@@ -229,7 +238,7 @@ export class MatchRenderer {
       )
       lamp.position.set(x, 34, z)
       scene.add(lamp)
-      const glow = new THREE.PointLight('#dff3ff', 40, 120)
+      const glow = new THREE.PointLight('#dff3ff', 40, 140)
       glow.position.set(x, 32, z)
       scene.add(glow)
     }
@@ -368,13 +377,55 @@ export class MatchRenderer {
     this.frameMoment(scene)
   }
 
+  /** 关键瞬间：把「球」和「球门」都框进画面，镜头从球的后方推近 */
   private frameMoment(scene: Scene) {
     const attack = scene.ball.x > 50
     const goalZ = attack ? PITCH_LENGTH / 2 : -PITCH_LENGTH / 2
+    const dir = attack ? 1 : -1
     const ballW = toWorld(scene.ball.x, scene.ball.y, 0)
-    this.targetLook.set(ballW.x * 0.35, 1.2, THREE.MathUtils.lerp(ballW.z, goalZ, 0.55))
-    const camZ = goalZ > 0 ? goalZ - 24 : goalZ + 24
-    this.targetPos.set(THREE.MathUtils.clamp(ballW.x * 0.6, -14, 14), 11.5, camZ)
+
+    /* 取景偏向球门：玩家要看清的是门前发生了什么 */
+    const goal = new THREE.Vector3(0, 1.3, goalZ)
+    const center = new THREE.Vector3().lerpVectors(ballW, goal, 0.62)
+    center.y = 1.3
+
+    const spanX = Math.abs(ballW.x - goal.x)
+    const spanZ = Math.abs(ballW.z - goal.z)
+    const spread = Math.max(spanX, spanZ * 0.85, 8)
+    const dist = THREE.MathUtils.clamp(spread * 1.05 + 9, 15, 30)
+
+    this.targetLook.copy(center)
+    const camZ = center.z - dir * dist * 0.66
+    const camX = center.x + (ballW.x >= 0 ? 1 : -1) * dist * 0.26
+    this.targetPos.set(
+      THREE.MathUtils.clamp(camX, -30, 30),
+      THREE.MathUtils.clamp(dist * 0.3, 5.5, 11),
+      THREE.MathUtils.clamp(camZ, -56, 56),
+    )
+    this.snapCamera()
+  }
+
+  debugCamera() {
+    const ball = this.ball.position.clone().project(this.camera)
+    const goalA = new THREE.Vector3(0, 1.2, PITCH_LENGTH / 2).project(this.camera)
+    const goalB = new THREE.Vector3(0, 1.2, -PITCH_LENGTH / 2).project(this.camera)
+    return {
+      cam: this.camera.position.toArray().map((n) => Math.round(n * 10) / 10),
+      look: this.cameraLook.toArray().map((n) => Math.round(n * 10) / 10),
+      ballNDC: [Math.round(ball.x * 100) / 100, Math.round(ball.y * 100) / 100, Math.round(ball.z * 100) / 100],
+      goalPlusNDC: [Math.round(goalA.x * 100) / 100, Math.round(goalA.y * 100) / 100, Math.round(goalA.z * 100) / 100],
+      goalMinusNDC: [Math.round(goalB.x * 100) / 100, Math.round(goalB.y * 100) / 100, Math.round(goalB.z * 100) / 100],
+      aspect: Math.round(this.camera.aspect * 100) / 100,
+      fov: this.camera.fov,
+    }
+  }
+
+  /** 立刻把相机放到目标位并重绘，避免节流环境下停在旧位置 */
+  private snapCamera() {
+    this.camera.position.copy(this.targetPos)
+    this.cameraLook.copy(this.targetLook)
+    this.camera.lookAt(this.cameraLook)
+    this.renderer.render(this.scene, this.camera)
   }
 
   /** 播放结果：球飞向落点 */
@@ -399,8 +450,8 @@ export class MatchRenderer {
     this.celebrate = 0
     this.ballFlight = -1
     this.releaseFigures()
-    this.targetPos.set(0, 42, -62)
-    this.targetLook.set(0, 0, 8)
+    this.targetPos.set(0, 30, -44)
+    this.targetLook.set(0, 0, 4)
   }
 
   /** 中场跑位动画：让球员随比赛推进随机游走 */
@@ -440,9 +491,9 @@ export class MatchRenderer {
     const t = this.clock.elapsedTime
 
     /* 镜头缓动：推近/拉远 */
-    const lerp = 1 - Math.pow(0.001, dt)
-    this.camera.position.lerp(this.targetPos, lerp * 0.9)
-    this.cameraLook.lerp(this.targetLook, lerp * 0.9)
+    const lerp = 1 - Math.pow(0.0000001, dt)
+    this.camera.position.lerp(this.targetPos, Math.min(1, lerp))
+    this.cameraLook.lerp(this.targetLook, Math.min(1, lerp))
     this.camera.lookAt(this.cameraLook)
 
     /* 定格时轻微呼吸感 */
