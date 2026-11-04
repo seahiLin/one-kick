@@ -63,7 +63,8 @@ export function MatchScreen({ game }: { game: GameApi }) {
   }, [match])
 
   const shownMoment = phase === 'moment' ? activeMoment : frozen
-  const scene: Scene | null = shownMoment?.scene ?? null
+  /* 快进时回到全景镜头，关键瞬间才推近 */
+  const scene: Scene | null = phase === 'ff' ? null : (shownMoment?.scene ?? null)
   const shootout = match?.shootout ?? null
 
   /* 上一段比赛的结果：播放动画，然后快进到下一个瞬间 */
@@ -211,7 +212,7 @@ export function MatchScreen({ game }: { game: GameApi }) {
       {/* 舞台 + 操作区 */}
       <div className="flex flex-1 flex-col gap-3 px-3 pb-4 pt-2 sm:px-5 lg:flex-row">
         {/* 3D 球场 */}
-        <div className="relative min-h-[240px] flex-1 overflow-hidden rounded-2xl border border-emerald-200/15 shadow-[0_20px_60px_rgba(0,0,0,0.55)] sm:min-h-[300px]">
+        <div className="relative min-h-[46vh] flex-1 overflow-hidden rounded-2xl border border-emerald-200/15 shadow-[0_20px_60px_rgba(0,0,0,0.55)] sm:min-h-[340px]">
           <Pitch3D
             scene={scene}
             us={team.colors}
@@ -276,8 +277,8 @@ export function MatchScreen({ game }: { game: GameApi }) {
           )}
 
           {/* 角落雷达图：只做补充，不遮球场 */}
-          {shownMoment && (
-            <div className="pointer-events-none absolute bottom-2 left-2 h-20 w-28 overflow-hidden rounded-lg border border-emerald-200/25 bg-black/40 shadow-lg sm:h-24 sm:w-36">
+          {shownMoment && phase !== 'ff' && (
+            <div className="pointer-events-none absolute bottom-2 left-2 h-16 w-24 overflow-hidden rounded-lg border border-emerald-200/25 bg-black/40 shadow-lg sm:h-20 sm:w-28">
               <PitchBoard scene={shownMoment.scene} us={team.colors} them={opponent.colors} />
             </div>
           )}

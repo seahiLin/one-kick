@@ -405,21 +405,6 @@ export class MatchRenderer {
     this.snapCamera()
   }
 
-  debugCamera() {
-    const ball = this.ball.position.clone().project(this.camera)
-    const goalA = new THREE.Vector3(0, 1.2, PITCH_LENGTH / 2).project(this.camera)
-    const goalB = new THREE.Vector3(0, 1.2, -PITCH_LENGTH / 2).project(this.camera)
-    return {
-      cam: this.camera.position.toArray().map((n) => Math.round(n * 10) / 10),
-      look: this.cameraLook.toArray().map((n) => Math.round(n * 10) / 10),
-      ballNDC: [Math.round(ball.x * 100) / 100, Math.round(ball.y * 100) / 100, Math.round(ball.z * 100) / 100],
-      goalPlusNDC: [Math.round(goalA.x * 100) / 100, Math.round(goalA.y * 100) / 100, Math.round(goalA.z * 100) / 100],
-      goalMinusNDC: [Math.round(goalB.x * 100) / 100, Math.round(goalB.y * 100) / 100, Math.round(goalB.z * 100) / 100],
-      aspect: Math.round(this.camera.aspect * 100) / 100,
-      fov: this.camera.fov,
-    }
-  }
-
   /** 立刻把相机放到目标位并重绘，避免节流环境下停在旧位置 */
   private snapCamera() {
     this.camera.position.copy(this.targetPos)
@@ -450,8 +435,9 @@ export class MatchRenderer {
     this.celebrate = 0
     this.ballFlight = -1
     this.releaseFigures()
-    this.targetPos.set(0, 30, -44)
-    this.targetLook.set(0, 0, 4)
+    this.targetPos.copy(this.cameraPos)
+    this.targetLook.copy(this.cameraLook)
+    this.snapCamera()
   }
 
   /** 中场跑位动画：让球员随比赛推进随机游走 */
